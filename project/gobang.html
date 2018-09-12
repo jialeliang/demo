@@ -37,6 +37,18 @@
 			text-align: center;
 			line-height: 30px;
 		}
+		.white, .black{
+			width: 30px;
+			height: 30px;
+			border-radius: 50%;
+			
+		}
+		.white{
+			background: white;
+		}
+		.black{
+			background: black;
+		}
 		.chessDrop{
 			animation: drop 0.5s;
 		}
@@ -171,12 +183,12 @@
 			var type = {};
 			switch(game.nextChess){
 				case 1:
-					type['chessHTML'] = '<i class="fa fa-circle"></i>';
+					type['chessHTML'] = '<i class="black"></i>';
 					type['text'] = '黑子';
 					return type;
 				break;
 				case 2:
-					type['chessHTML'] = '<i class="fa fa-circle" style="color:white"></i>';
+					type['chessHTML'] = '<i class="white" style="color:white"></i>';
 					type['text'] = '白子';
 					return type;
 				break;
