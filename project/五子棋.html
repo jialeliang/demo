@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>五子棋</title>
+	<link rel="stylesheet" type="text/css" href="./font-awesome-4.7.0/css/font-awesome.min.css">
+
+	<style type="text/css">
+		*{
+			margin: 0;
+			padding: 0;
+		}
+		#chessBoard{
+			margin: 200px auto;
+			border-right: 1px solid black;
+			border-bottom: 1px solid black;
+			position: relative;
+			background-image: url('./imgs/mutou.jpg');
+		}
+		.content{
+			clear: both;
+		}
+		.chessGrid{
+			width: 30px;
+			height: 30px;
+			border-left: 1px solid black;
+			border-top: 1px solid black;
+			box-sizing: border-box;
+			position: absolute;
+		}
+		.chess{
+			position: absolute;
+			font-size: 20px;
+			width: 30px;
+			height: 30px;
+			cursor: pointer;
+			text-align: center;
+			line-height: 30px;
+		}
+		.chessDrop{
+			animation: drop 0.5s;
+		}
+		@keyframes drop{
+			0% {transform: scale(1.1); transform: translateY(-5px);}
+			100% {transform: scale(1); transform: translateY(0);}
+		}
+	</style>
+</head>
+<body ondragstart="return false" onselectstart='return false'>
+	<div id="chessBoard">
+	</div>
+	<p id="com"></p>
+	<button onclick="changeNext('person')">你先</button>
+	<button onclick="changeNext('computer')">电脑先</button>
+	<button onclick="hq()">悔棋</button>
+
+	<script type="text/javascript">
+		var game = {
+			chessBoard: document.getElementById('chessBoard'), //棋盘id
+			chess: document.getElementsByClassName('chess'), //棋子class
+			comP: document.getElementById('com'), //计算语言
+			chessSize: 30, //棋子大小
+			col: 15, //棋盘列数
+			row: 15, //棋盘行数
+			board: [], //棋盘；棋盘中0=无棋子, 1=黑子, 2=白子
+			nextChess: 2, //下一步
+			success: 5, //胜利条件
+			baseChess: 'person', //执子人 默认玩家
+
+			cq: [],
+			pq: [],
+		}
+
+		function init(){ //游戏初始化
+			//棋盘大小
+			game.chessBoard.style.height = game.chessBoard.style.width = game.chessSize*game.col + 'px';
+
+			//生成好看的棋子
+			for( var i = 0; i < game.row; i++ ){
+				for( var j = 0; j < game.col; j++ ){
+					var chess = document.createElement('div');
+					chess.className = 'chessGrid';
+					chess.style.left = (j%game.col)*game.chessSize + 'px';
+					chess.style.top = (i%game.row)*game.chessSize + 'px';
+
+					game.chessBoard.appendChild(chess);
+				}
+			}
+
+			//生成棋盘二维数组
+			for (var i = 0; i < game.row; i++) {
+				game.board[i] = [];
+				for (var j = 0; j < game.col; j++) {
+					game.board[i][j] = 0;
+				}
+			}
+
+			//生成棋子
+			for (var i = 0; i < game.row; i++) {
+				for (var j = 0; j < game.col; j++) {
+					var chess = document.createElement('div');
+					chess.className = 'chess ' + i + '-' + j;
+					chess.style.left = j%game.col * game.chessSize + 'px';
+					chess.style.top = i%game.row * game.chessSize + 'px';
+					game.chessBoard.appendChild(chess);
+
+					(function(y, x, elem){
+						elem.onclick = function(){
+							drop(y, x);
+						}
+					}(i, j, chess))
+				}
+			}
+
+			// 判断电脑是否先手
+			if( game.baseChess == 'computer' ){
+				comChess(); //电脑下子
+			}
+
+		}
+
+		function hq(){ //悔棋
+			var py = game.pq[0],
+				px = game.pq[1];
+			var cy = game.cq[0],
+				cx = game.cq[1];
+			game.board[py][px] = 0;
+			game.board[cy][cx] = 0;
+
+			var chessP = game.chess[py*game.row + px];
+			var chessC = game.chess[cy*game.row + cx];
+
+			chessP.innerHTML = '';
+			chessP.className = "chess " + py + '-' + px;
+
+			chessC.innerHTML = '';
+			chessC.className = "chess " + cy + '-' + cx;
+		}
+
+		function drop(y, x, com){ //落子
+			var chess = game.chess[y*game.row + x];
+			if( !ifClass(chess, 'chessDrop') && game.baseChess == 'person' ){
+				//玩家下完棋后将执子改为computer
+				game.baseChess = game.baseChess == 'computer' ? 'person' : 'computer';
+				game.nextChess = game.nextChess == 1 ? 2 : 1;
+				chess.innerHTML = ifType(game.nextChess).chessHTML;
+				chess.className += " chessDrop";
+				game.board[y][x] = game.nextChess; //棋子输入棋盘
+				ifVictory(y, x);
+
+				game.pq = [y, x];
+
+				comChess(); //电脑下子
+			}else if( com == 'computer' ){
+				game.baseChess = game.baseChess == 'computer' ? 'person' : 'computer';
+				game.nextChess = game.nextChess == 1 ? 2 : 1;
+				chess.innerHTML = ifType(game.nextChess).chessHTML;
+				chess.className += " chessDrop";
+				game.board[y][x] = game.nextChess; //棋子输入棋盘
+				ifVictory(y, x);
+
+				game.cq = [y, x];
+			}
+		}
+
+		function ifClass(elem, name){ //判断是否已经落子
+			return elem.className.indexOf(name) > -1;
+		}
+
+		function ifType(){ //落子类型
+			var type = {};
+			switch(game.nextChess){
+				case 1:
+					type['chessHTML'] = '<i class="fa fa-circle"></i>';
+					type['text'] = '黑子';
+					return type;
+				break;
+				case 2:
+					type['chessHTML'] = '<i class="fa fa-circle" style="color:white"></i>';
+					type['text'] = '白子';
+					return type;
+				break;
+				default:
+				break;
+			}
+		}
+
+		function changeNext(text){
+			console.log( '已修改为' + text );
+			game.baseChess = text;
+			if( game.baseChess == 'computer' ){
+				comChess(); //电脑下子
+			}
+		}
+
+		function score(y, x){ //估分算法
+			var comScore = 100; //计算机分数
+			var perScore = 0; //玩家分数
+			var comChess = game.nextChess == 1 ? 2 : 1; //现在是谁执子 电脑
+			var perChess = game.nextChess; //玩家
+			var comArr = ifChess(y, x, comChess); //电脑棋子
+			var perArr = ifChess(y, x, perChess); //电脑棋子
+			var ifArrCom = comArr.splice(5);
+			var ifArrPer = perArr.splice(5);
+
+			//成5 5-9
+			for( var i = 4; i < 9; i++ ){
+				if( comArr.indexOf(i) > -1 ){
+					comScore += 10000;
+				}
+				if( perArr.indexOf(i) > -1 ){
+					perScore += 10000;
+				}
+			}
+
+			for( var i = 0; i <= 3; i++ ){
+				perScore += space(perArr, i, ifArrPer);
+				comScore += space(comArr, i, ifArrCom);
+			}
+
+			return Math.max(comScore, perScore);
+		}
+
+		function space(dataArr, ifcon, ifsp){
+			var index = 0, arr;
+			while( (arr = dataArr.indexOf(ifcon, index)) > -1 ){
+				index = arr + 1;
+				switch( arr ){
+					case 1:
+						if( ifsp[0] == 0 && ifsp[1] == 0 ){
+							return getScore(ifcon);
+						}else if( ifsp[0] == 0 || ifsp[1] == 0  ){
+							return getScore(ifcon-1);
+						}
+					break;
+					case 2:
+						if( ifsp[2] == 0 && ifsp[3] == 0 ){
+							return getScore(ifcon);
+						}else if( ifsp[2] == 0 || ifsp[3] == 0  ){
+							return getScore(ifcon-1);
+						}
+					break;
+					case 3:
+						if( ifsp[4] == 0 && ifsp[5] == 0 ){
+							return getScore(ifcon);
+						}else if( ifsp[4] == 0 || ifsp[5] == 0  ){
+							return getScore(ifcon-1);
+						}
+					break;
+					case 4:
+						if( ifsp[6] == 0 && ifsp[7] == 0 ){
+							return getScore(ifcon);
+						}else if( ifsp[6] == 0 || ifsp[7] == 0  ){
+							return getScore(ifcon-1);
+						}
+					break;
+				}
+			}
+			return 0;
+		}
+
+		function getScore(index){
+			switch( index ){
+				case 3:
+					return 4999;
+				break;
+				case 2:
+					return 2499;
+				break;
+				case 1:
+					return 1249;
+				break;
+				case 0:
+					return 3;
+				break;
+				default:
+					return 0;
+				break;
+			}
+		}
+
+		function comChess(){ //计算机AI 
+			console.time('电脑思考了');
+			game.comP.innerHTML = '电脑正在思考';
+
+			var chessScore = []; //所有可以下的位置的分数
+
+			//循环棋盘每个能下子的地方 计算computer
+			for( var i = 0; i < game.row; i++ ){
+				for( var j = 0; j < game.col; j++ ){
+					if( game.board[i][j] == 0 ){
+						chessScore.push([(i*game.row)+j, score(i, j)]); 
+					}
+				}
+			}
+
+			var MAX = 0;
+			var MAXarr = [];
+
+			for( var i = 0; i < chessScore.length; i++ ){
+				if( chessScore[i][1] == MAX ){
+					MAXarr.push(chessScore[i]);
+				}
+				if( chessScore[i][1] > MAX ){
+					MAX = chessScore[i][1];
+					MAXarr = [];
+					MAXarr.push(chessScore[i]);
+				}
+			}
+
+			console.log(MAXarr)
+
+			var random = Math.floor( Math.random()*MAXarr.length );
+			var arrSite = MAXarr[random][0];
+			var siteY = Math.floor(arrSite/game.row);
+			var siteX = arrSite%game.row;
+
+			drop( siteY, siteX, 'computer' );
+
+			console.log( '有' + MAXarr.length + '种下棋方案, 电脑下子：(' + [siteY, siteX] + ')' );
+			game.comP.innerHTML = '电脑下好棋了，落子在(' + [siteY, siteX] + ')';
+			console.timeEnd('电脑思考了');
+		}
+
+		function maxmin(){
+
+		}
+
+		function ifVictory(y, x){ //判断胜负
+			var chess = game.board[y][x];
+			var chessNum = ifChess(y, x, chess);
+
+			if( (chessNum[1] + 1 >= game.success) || (chessNum[2] + 1 >= game.success) ||
+				(chessNum[3] + 1 >= game.success) || (chessNum[4] + 1 >= game.success)){
+				alert( ifType(chess).text + '胜利了' );
+			}
+		}
+
+		function ifChess(y, x, chess){
+			var chessNum = []; //连子计数
+
+			for( let i = 1; i <= 4; i++ ){
+				chessNum[i] = 0;
+			}
+
+			for( let i = x; i > 0; i-- ){ //计数左边
+				if( game.board[y][i-1] == chess ){
+					chessNum[1]++;
+				}else{
+					chessNum[5] = game.board[y][i-1];
+					break;
+				}
+			}
+			for( let i = x; i < game.row - 1; i++ ){ //计数右边
+				if( game.board[y][i+1] == chess ){
+					chessNum[1]++;
+				}else{
+					chessNum[6] = game.board[y][i+1];
+					break;
+				}
+			} 
+			for( let i = y; i > 0; i-- ){  //计数上边
+				if( game.board[i-1][x] == chess ){
+					chessNum[2]++;
+				}else{
+					chessNum[7] = game.board[i-1][x];
+					break;
+				}
+			}
+			for( let i = y; i < game.col - 1; i++ ){ //计数下边
+				if( game.board[i+1][x] == chess ){
+					chessNum[2]++;
+				}else{
+					chessNum[8] = game.board[i+1][x];
+					break;
+				}
+			}
+			for( let i = x, j = y; i > 0 && j > 0; i--, j-- ){ //计数左上
+				if( game.board[j-1][i-1] == chess ){
+					chessNum[3]++;
+				}else{
+					chessNum[9] = game.board[j-1][i-1];
+					break;
+				}
+			}
+			for( let i = x, j = y; i < game.col - 1 && j < game.row - 1; i++, j++ ){ //计数右下
+				if( game.board[j+1][i+1] == chess ){
+					chessNum[3]++;
+				}else{
+					chessNum[10] = game.board[j+1][i+1];
+					break;
+				}
+			}
+			for( let i = x, j = y; i > 0 && j < game.row - 1; i--, j++ ){ //计数左下
+				if( game.board[j+1][i-1] == chess ){
+					chessNum[4]++;
+				}else{
+					chessNum[11] = game.board[j+1][i-1];
+					break;
+				}
+			}
+			for( let i = x, j = y; i < game.col - 1 && j > 0; i++, j-- ){ //计数右上
+				if( game.board[j-1][i+1] == chess ){
+					chessNum[4]++;
+				}else{
+					chessNum[12] = game.board[j-1][i+1];
+					break;
+				}
+			}
+
+			return chessNum;
+		}
+
+
+		window.onload = function(){
+			init();
+		}
+	</script>
+</body>
+</html>

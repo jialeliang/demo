@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style>
+		*{
+			margin: 0;
+			padding: 0;
+		}
+		div{
+			width: 100%;
+			font-size: 100px;
+			text-align: center;
+			line-height: 4;
+		}
+		body{
+			position: relative;
+			overflow: hidden;
+		}
+	</style>
+
+</head>
+<body>
+	<script>
+		var acolor = ['red', 'yellow', 'green'];
+		var docHeight = document.documentElement.clientHeight;
+		var body = document.getElementsByTagName('body')[0];
+		body.style.height = docHeight;
+
+		var j = 0;
+		for( var i = 0; i < 10; i++ ){
+			var div = document.createElement('div');
+			div.style.background = acolor[(j++)%3];
+			div.style.height = docHeight + 'px';
+			div.innerHTML = i;
+			body.appendChild(div);
+		}
+
+		addEventListener('mousewheel', scroll, false)
+
+		var off = false;
+		var atop = 0;
+		function scroll(ev){
+			ev.preventDefault();
+			var angle = ev.wheelDelta;
+
+			if( !off ){
+				off = true;
+				if( angle > 0 ){
+					move( atop, 1 );
+				}else{
+					move( atop, -1 );
+				}
+			}
+		}
+
+		var timer = null
+
+		function move(origin, angle){ 
+			var target = origin;
+			timer = setInterval(function(){
+				atop = origin += (10 * angle);
+
+				console.log( origin );
+
+				if( atop + (10 * angle) >= target + docHeight && angle > 0 ){
+					clearInterval(timer);
+					atop = target + docHeight;
+					off = false;
+				}else if( atop + (10 * angle) <= target - docHeight && angle < 0 ){
+					clearInterval(timer);
+					atop = target - docHeight;
+					off = false;
+				}
+
+				body.style.top = atop + 'px';
+
+			}, 1)
+		}
+
+		//键盘监听事件
+	</script>
+</body>
+</html>

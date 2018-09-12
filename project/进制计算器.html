@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>进制计算器</title>
+	<style type="text/css">
+		*{
+			margin: 0;
+			padding: 0;
+		}
+		.container{
+			margin: 0 auto;
+			width: 500px;
+		}
+		.calc{
+			margin: 100px 0;
+		}
+		.view{
+			width: 500px;
+			margin: 5px auto;
+			height: 50px;
+			border: 2px solid #dedede;
+			border-radius: 5px;
+			font-size: 30px;
+			line-height: 30px;
+			text-align: right;
+			padding: 10px;
+			box-sizing: border-box;
+			font-weight: 300;
+			overflow-x: auto;
+			overflow-y: hidden;
+		}
+		.content{
+			width: 500px;
+		}
+		.btn{
+			width: 115px;
+			height: 40px;
+			border: 1px solid #dedede;
+			background: #ededed;
+			border-radius: 5px;
+			outline: none;
+			cursor: pointer;
+		}
+		.btn:hover{
+			background: #dedede;
+		}
+		.space-bet{
+			display: flex;
+			justify-content: space-between;
+			padding: 10px 0;
+			line-height: 40px;
+		}
+		.change{
+			width: 200px;
+		}
+		.sel{
+			height: 40px;
+			width: 140px;
+			text-indent: 30px;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<div class="calc">
+			<div class="view" id="view-1">
+				
+			</div>
+			<div class="view" id="view-2">
+				
+			</div>
+			<div class="content">
+				<div class="space-bet">
+					计算进制: 
+					<select class="sel" id="sel-1">
+						<option>二进制</option>
+						<option>八进制</option>
+						<option selected>十进制</option>
+						<option>十六进制</option>
+					</select>
+					显示进制: 
+					<select class="sel" id="sel-2">
+						<option>二进制</option>
+						<option>八进制</option>
+						<option selected>十进制</option>
+						<option>十六进制</option>
+					</select>
+				</div>
+
+				<div class="space-bet">
+					<button value="0" class="btn">0</button>
+					<button value="1" class="btn">1</button>
+					<button value="2" class="btn">2</button>
+					<button value="+" class="btn">+</button>
+				</div>
+
+				<div class="space-bet">
+					<button value="3" class="btn">3</button>
+					<button value="4" class="btn">4</button>
+					<button value="5" class="btn">5</button>
+					<button value="-" class="btn">-</button>
+				</div>
+
+				<div class="space-bet">
+					<button value="7" class="btn">7</button>
+					<button value="8" class="btn">8</button>
+					<button value="9" class="btn">9</button>
+					<button value="*" class="btn">*</button>
+				</div>
+
+				<div class="space-bet">
+					<button value="6" class="btn">6</button>
+					<button value="a" class="btn">A</button>
+					<button value="b" class="btn">B</button>
+					<button value="/" class="btn">/</button>
+				</div>
+
+				<div class="space-bet">
+					<button value="c" class="btn">C</button>
+					<button value="d" class="btn">D</button>
+					<button value="e" class="btn">E</button>
+					<button value="f" class="btn">F</button>
+				</div>
+
+				<div class="space-bet">
+					<button value="del" class="change btn">清空</button>
+					<button value="change" class="change btn">change</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script type="text/javascript">
+		var view = document.getElementById('view-1');
+		var view2 = document.getElementById('view-2');
+		var selA = document.getElementById('sel-1');
+		var selB = document.getElementById('sel-2');
+		var oBtn = document.getElementsByClassName('btn');
+
+		for( var i = 0; i < oBtn.length; i++ ){
+			oBtn[i].onclick = function(){
+				main(this.value);
+			}
+		}
+
+		var text1 = '';
+		var prevType = selA.selectedIndex;
+		var nextType = null;
+		var type = '';
+		var ifoff = 0;
+		var jsoff = 0;
+
+		var status = 0;
+
+		function main(val){
+			switch(val){
+				case '+':
+					if( status == 0 && jsoff == 0 ){
+						text1 = view.innerHTML;
+						view.innerHTML = '';
+						jsoff = 1;
+						prevType = getIndex(selA.selectedIndex);
+					}else if(status == 0){
+						text1 = view2.innerHTML;
+						view2.innerHTML = '';
+						view.innerHTML = '';
+						prevType = getIndex(selB.selectedIndex);
+					}
+					type = '+';
+					status = 1;
+				break;
+				case '-':
+					if( status == 0 && jsoff == 0 ){
+						text1 = view.innerHTML;
+						view.innerHTML = '';
+						jsoff = 1;
+					}else if(status == 0){
+						text1 = view2.innerHTML;
+						view2.innerHTML = '';
+						view.innerHTML = '';
+						prevType = getIndex(selB.selectedIndex);
+					}
+					type = '-';
+					prevType = getIndex(selA.selectedIndex);
+					status = 1;
+				break;
+				case '*':
+					if( status == 0 && jsoff == 0 ){
+						text1 = view.innerHTML;
+						view.innerHTML = '';
+						jsoff = 1;
+					}else if(status == 0){
+						text1 = view2.innerHTML;
+						view2.innerHTML = '';
+						view.innerHTML = '';
+						prevType = getIndex(selB.selectedIndex);
+					}
+					prevType = getIndex(selA.selectedIndex);
+					type = '*';
+					status = 1;
+				break;
+				case '/':
+					if( status == 0 && jsoff == 0 ){
+						text1 = view.innerHTML;
+						view.innerHTML = '';
+						jsoff = 1;
+					}else if(status == 0){
+						text1 = view2.innerHTML;
+						view2.innerHTML = '';
+						view.innerHTML = '';
+						prevType = getIndex(selB.selectedIndex);
+					}
+					prevType = getIndex(view.selectedIndex);
+					type = '/';
+					status = 1;
+				break;
+				case 'del':
+					text1 = '';
+					view.innerHTML = '';
+					view2.innerHTML = '';
+					prevType = selA.selectedIndex;
+					type = '';
+					jsoff = 0;
+					status = 0;
+				break;
+				case 'change':
+					if( status == 1 ){
+						var num1 = parseInt(text1, prevType);
+						var num2 = parseInt(view.innerHTML, getIndex(selA.selectedIndex));
+						var result = '';
+						if( type == '+' ){
+							if( isNaN(num1) || isNaN(num2) ){
+								result = '输入数据有误';
+								view.innerHTML = result;
+								return false;
+							}
+							result = (parseInt(num1.toString(10)) + parseInt(num2.toString(10))).toString(getIndex(selB.selectedIndex));
+						}
+						if( type == '-' ){
+							if( isNaN(num1) || isNaN(num2) ){
+								result = '输入数据有误';
+								view.innerHTML = result;
+								return false;
+							}
+							result = (parseInt(num1.toString(10)) - parseInt(num2.toString(10))).toString(getIndex(selB.selectedIndex));
+						}
+						if( type == '*' ){
+							if( isNaN(num1) || isNaN(num2) ){
+								result = '输入数据有误';
+								view.innerHTML = result;
+								return false;
+							}
+							result = (parseInt(num1.toString(10)) * parseInt(num2.toString(10))).toString(getIndex(selB.selectedIndex));
+						}
+						if( type == '/' ){
+							if( isNaN(num1) || isNaN(num2) ){
+								result = '输入数据有误';
+								view.innerHTML = result;
+								return false;
+							}
+							result = (parseInt(num1.toString(10)) / parseInt(num2.toString(10))).toString(getIndex(selB.selectedIndex));
+						}
+						nextType = getIndex(selB.selectedIndex);
+						status = 0;
+						ifoff = 1;
+						view2.innerHTML = result;
+					}else{
+						var result = null;
+						if( ifoff == 1 ){
+							result = parseInt(view2.innerHTML, nextType).toString(getIndex(selB.selectedIndex));
+							view.innerHTML = view2.innerHTML;
+							ifoff = 0;
+						}else{
+							result = parseInt(view.innerHTML, nextType).toString(getIndex(selB.selectedIndex));
+						}
+						view2.innerHTML = result;
+					}
+				break;
+				default:
+					view.innerHTML += val;
+				break;
+			}
+		}
+
+		function getIndex(num){
+			switch(num){
+				case 0:
+					return 2;
+				break;
+				case 1:
+					return 8;
+				break;
+				case 2:
+					return 10;
+				break;
+				case 3:
+					return 16;
+				break;
+			}
+		}
+
+
+	</script>
+</body>
+</html>

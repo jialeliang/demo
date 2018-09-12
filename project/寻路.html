@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+		*{
+			margin: 0;
+			padding: 0
+		}
+		.content{
+			background: #ededed;
+			position: relative;
+			margin: 100px auto;
+		}
+		.grid{
+			position: absolute;
+			width: 30px;
+			height: 30px;
+			border: 1px solid black;
+		}
+		.aGrid{
+			background: red;
+		}
+		.bGrid{
+			background: green;
+		}
+		.cGrid{
+			background: black;
+		}
+	</style>
+</head>
+<body>
+	<div class="content">
+		
+	</div>
+	<button onclick="way()">开始寻路</button>
+
+	<script type="text/javascript">
+		var data = {};
+
+		function updateData(){
+			data = {
+				row: 20,
+				col: 20,
+
+				board: [],
+
+				a: [14,16],
+				start: [14,16],
+
+				b: [1,1],
+
+				Max: null,
+			}
+		}
+
+		init();
+
+		function init(){
+			updateData();
+
+			document.getElementsByClassName('content')[0].style.width = data.col*31 + 'px';
+
+			for( var i = 0; i < data.row; i++ ){
+				data.board[i] = [];
+				for( var j = 0; j < data.col; j++ ){
+					data.board[i][j] = 0;
+				}
+			}
+
+			setGrid(data.a, 2);
+			setGrid(data.b, 3);
+
+			updateView()
+		}
+
+		function updateView(){
+			document.getElementsByClassName('content')[0].innerHTML = '';
+			for( var i = 0; i < data.row; i++ ){
+				for( var j = 0; j < data.col; j++ ){
+					pushGrid(i, j);
+				}
+			}
+		}
+		function pushGrid(y, x){
+			var grid = document.createElement('div');
+			grid.className = 'grid';
+			grid.x = x;
+			grid.y = y;
+			grid.style.left = x*31 + 'px';
+			grid.style.top = y*31 + 'px';
+			grid.onclick = function(){
+				if( data.board[this.y][this.x] == 1 ){
+					data.board[this.y][this.x] = 0;
+				}else{
+					data.board[this.y][this.x] = 1;
+				}
+				updateView();
+			}
+
+			if( data.board[y][x] == 1 ){
+				grid.className = 'grid cGrid';
+			}
+			if( data.board[y][x] == 2 ){
+				grid.className = 'grid aGrid';
+			}
+			if( data.board[y][x] == 3 ){
+				grid.className = 'grid bGrid';
+			}
+
+			document.getElementsByClassName('content')[0].appendChild(grid);
+		}
+
+		var openArr = [];
+		var closeArr = [];
+
+		function way(){
+			var nearby = getSiteNearby(data.a[0], data.a[1]);
+			var l = 0;
+			for( var i = 0; i < nearby.length; i++ ){
+				var site = nearby[i][0];
+				if( site == 3 ){
+					alert('找到了');
+					return false;
+				}
+				if( site == -1 ||
+					site == 2 ||
+					site == 1 )l++;
+				if( l >= nearby.length ){
+					alert('不可移动');
+					return false;
+				}
+			}
+
+			data.Max = null;
+
+			for( var i = 0; i < nearby.length; i++ ){
+				if( nearby[i][0] == -1 || nearby[i][0] == 3 )continue;
+				var x = nearby[i][1][0];
+				var y = nearby[i][1][1];
+				var score = getScore(x, y);
+				var site = data.board[x][y];
+				if( site == 0 ){
+					openArr.push([score, [x, y]]);
+					if( data.Max == null ){
+						data.Max = [];
+						data.Max.push([score, [x, y]]);
+					}else if( data.Max[0][0] == score ){
+						data.Max.push([score, [x, y]]);
+					}else if( data.Max[0][0] > score ){
+						data.Max = [];
+						data.Max.push([score, [x, y]]);
+					}
+				}
+			}
+
+			var ran = Math.floor(Math.random()*data.Max.length);
+			var site = data.Max[ran][1];
+			data.board[site[0]][site[1]] = 2;
+
+			data.board[data.a[0]][data.a[1]] = 2;
+			data.a = [site[0], site[1]];
+
+			updateView(); 
+		}
+
+		function getScore(x, y){
+			return g(y, x) + h(y, x);
+		}
+		function g(y, x){
+			var ys = Math.abs(y - data.start[1]) * Math.abs(y - data.start[1]);
+			var xs = Math.abs(x - data.start[0]) * Math.abs(x - data.start[0]);
+			return Math.sqrt(ys + xs);
+		}
+		function h(y, x){
+			var ys = Math.abs(y - data.b[1]) * Math.abs(y - data.b[1]);
+			var xs = Math.abs(x - data.b[0]) * Math.abs(x - data.b[0]);
+			return Math.sqrt(ys + xs);
+		}
+
+		function getSiteNearby(x, y){
+			var nearby = [];
+			var i = x;
+			var j = y;
+
+			for( let i = 0; i <= 7; i++ ){
+				nearby[i] = [-1, null];
+			}
+
+			if( i-1 >= 0 ){ //上
+				nearby[0] = [data.board[i-1][j], [i-1,j]];
+			}
+			if( i+1 < data.row ){ //下
+				nearby[1] = [data.board[i+1][j], [i+1,j]];
+			}
+			if( j-1 >= 0 ){ //左
+				nearby[2] = [data.board[i][j-1], [i,j-1]];
+			}
+			if( j+1 < data.col ){ //右
+				nearby[3] = [data.board[i][j+1], [i,j+1]];
+			}
+			if( j-1 >= 0 && i-1 >= 0 ){ //左上
+				nearby[4] = [data.board[i-1][j-1], [i-1,j-1]];
+			}
+			if( j-1 >= 0 && i+1 < data.row ){ //左下
+				nearby[5] = [data.board[i+1][j-1], [i+1,j-1]];
+			}
+			if( j+1 < data.col && i-1 >= 0 ){ //右上 
+				nearby[6] = [data.board[i-1][j+1], [i-1,j+1]];
+			}
+			if( j+1 < data.col && i+1 < data.row ){ //右下
+				nearby[7] = [data.board[i+1][j+1], [i+1,j+1]];
+			}
+
+			return nearby;
+		}
+
+		function setGrid(arr, num){
+			data.board[arr[0]][arr[1]] = num;
+		}
+	</script>
+</body>
+</html>
